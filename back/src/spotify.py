@@ -12,7 +12,11 @@ def get_spotify_client():
     os.environ["SPOTIPY_CLIENT_ID"] = os.getenv("SPOTIPY_CLIENT_ID")
     os.environ["SPOTIPY_CLIENT_SECRET"] = os.getenv("SPOTIPY_CLIENT_SECRET")
     os.environ["SPOTIPY_REDIRECT_URI"] = os.getenv("SPOTIPY_REDIRECT_URI")
-    return spotipy.Spotify(auth_manager=SpotifyOAuth(scope="user-library-read user-read-recently-played"))
+    print(os.getenv("SPOTIPY_CLIENT_ID"))
+    return spotipy.Spotify(auth_manager=SpotifyOAuth(
+        scope="user-library-read user-read-recently-played",
+        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
+    ))
 
 
 def get_recent_tracks():

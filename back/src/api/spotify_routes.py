@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends
-from spotify import get_recent_tracks
+from spotify import get_spotify_client, get_recent_tracks
 
 router = APIRouter()
 
 @router.get("/login")
 async def login():
+    client = get_spotify_client()
     """Endpoint para redirigir al usuario a la URL de login de Spotify."""
-    return {"message": "Redirige al usuario a la URL de login de Spotify."}
+    return {"client": client.current_user_playing_track()}
 
 @router.get("/callback")
 async def callback():

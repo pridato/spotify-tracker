@@ -1,14 +1,38 @@
-"use client"
-import { Button, Card, CardBody, CardFooter, CardHeader, Text, Heading } from "@chakra-ui/react";
+"use client";
+import {
+  Button,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  Text,
+  Heading,
+} from "@chakra-ui/react";
+import { loginWithSpotify } from "./services/spotify_service";
+import { useToast } from "@chakra-ui/react";
 
 export default function Home() {
+  const toast = useToast();
+  const status = "error";
 
   /**
    * Funcion para loguearse con Spotify
    * @returns void
    */
-  function handleLoginWithSpotify() {
-    console.log('Logueandome con Spotify')
+  async function handleLoginWithSpotify() {
+    try {
+      const data = await loginWithSpotify();
+      console.log(data);
+    } catch (error) {
+      toast({
+        title: `${status} toast ${error}`,
+        description: "Error al intentar iniciar sesión con Spotify",
+        status: status,
+        isClosable: true,
+        position: "top-right",
+
+      });
+    }
   }
 
   return (
@@ -17,7 +41,6 @@ export default function Home() {
         <div className=" relative hidden h-screen shadow-lg lg:block w-80">
           <div className="h-full bg-white dark:bg-gray-700">
             <div className="flex items-center justify-start pt-6 ml-8">
-              
               <p className="text-xl font-bold dark:text-white">Plannifer</p>
             </div>
             {/* Sidebar */}
@@ -100,7 +123,6 @@ export default function Home() {
                 </a>
               </div>
             </nav>
-
           </div>
         </div>
         <div className="flex flex-col w-full md:space-y-4">
@@ -147,9 +169,7 @@ export default function Home() {
                   </svg>
                 </button>
                 <span className="w-1 h-8 bg-gray-200 rounded-lg"></span>
-                <a href="#" className="relative block">
-                  
-                </a>
+                <a href="#" className="relative block"></a>
                 <button className="flex items-center text-gray-500 dark:text-white text-md">
                   Charlie R
                   <svg
@@ -206,20 +226,19 @@ export default function Home() {
               </span>
             </div>
 
-            <Card align='center' bg='gray.300' py='4' my='5'>
+            <Card align="center" bg="gray.300" py="4" my="5">
               <CardHeader>
-                <Heading size='md'>Datos extraídos de Spotify</Heading>
+                <Heading size="md">Datos extraídos de Spotify</Heading>
               </CardHeader>
               <CardBody>
                 <Text>Exporta todo...</Text>
               </CardBody>
               <CardFooter>
-                <Button colorScheme='blue' onClick={handleLoginWithSpotify}>
+                <Button colorScheme="blue" onClick={handleLoginWithSpotify}>
                   Loguearme con Spotify
                 </Button>
               </CardFooter>
             </Card>
-            
           </div>
         </div>
       </div>

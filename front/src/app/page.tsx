@@ -2,6 +2,15 @@
 import { Button, Card, CardBody, CardFooter, CardHeader, Text, Heading } from "@chakra-ui/react";
 
 export default function Home() {
+
+  /**
+   * Funcion para loguearse con Spotify
+   * @returns void
+   */
+  function handleLoginWithSpotify() {
+    console.log('Logueandome con Spotify')
+  }
+
   return (
     <main className="relative h-screen overflow-hidden bg-gray-100 dark:bg-gray-800">
       <div className="flex items-start justify-between">
@@ -199,13 +208,15 @@ export default function Home() {
 
             <Card align='center' bg='gray.300' py='4' my='5'>
               <CardHeader>
-                <Heading size='md'> Datos extraidos de spotify</Heading>
+                <Heading size='md'>Datos extraídos de Spotify</Heading>
               </CardHeader>
               <CardBody>
                 <Text>Exporta todo...</Text>
               </CardBody>
               <CardFooter>
-                <Button colorScheme='blue'>View here</Button>
+                <Button colorScheme='blue' onClick={handleLoginWithSpotify}>
+                  Loguearme con Spotify
+                </Button>
               </CardFooter>
             </Card>
             

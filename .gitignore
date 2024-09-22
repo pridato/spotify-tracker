@@ -2,7 +2,7 @@
 # Ignorar archivos del sistema operativo
 .DS_Store
 Thumbs.db
-
+.env
 # ---- Python (FastAPI Backend) ----
 
 # Byte-compiled / optimized / DLL files

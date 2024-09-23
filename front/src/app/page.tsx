@@ -234,9 +234,14 @@ export default function Home() {
                 <Text>Exporta todo...</Text>
               </CardBody>
               <CardFooter>
-                <Button colorScheme="blue" onClick={handleLoginWithSpotify}>
-                  Loguearme con Spotify
-                </Button>
+              <Button
+                onClick={handleLoginWithSpotify}
+                colorScheme="teal"
+                variant="solid"
+              >
+                Iniciar sesión con Spotify
+              </Button>
+
               </CardFooter>
             </Card>
           </div>

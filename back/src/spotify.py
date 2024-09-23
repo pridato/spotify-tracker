@@ -3,9 +3,10 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
 
+
 def get_spotify_client():
     """Función para obtener los datos del cliente de Spotify a través de un .env."""
-    load_dotenv()
+    
     os.environ["SPOTIPY_CLIENT_ID"] = os.getenv("SPOTIPY_CLIENT_ID")
     os.environ["SPOTIPY_CLIENT_SECRET"] = os.getenv("SPOTIPY_CLIENT_SECRET")
     os.environ["SPOTIPY_REDIRECT_URI"] = os.getenv("SPOTIPY_REDIRECT_URI")
@@ -32,24 +33,34 @@ def get_recent_tracks():
 
     return tracks
 
-def authenticate_and_get_data(code):
-    """Función para autenticar y obtener los datos del usuario usando el código."""
-    sp = SpotifyOAuth(client_id=os.getenv("SPOTIPY_CLIENT_ID"),
-                      client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
-                      redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
-                      scope="user-library-read user-read-recently-played")
+def get_redirect():
+    """
+    Función para obtener la URL de redirección de Spotify.
+    @return: URL de redirección de Spotify.
+    """
+    scope = (
+        "user-read-private "
+        "user-read-email "
+        "user-library-read "
+        "user-read-playback-state "
+        "user-read-currently-playing "
+        "playlist-read-private "
+        "playlist-modify-private "
+        "user-read-recently-played "
+        "user-top-read"
+    )
+    
+    load_dotenv()
+    SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
+    # SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+    SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
 
-    # Obtiene el token de acceso usando el código
-    token_info = sp.get_access_token(code)
+    SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
+    # SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 
-    if token_info:
-        sp = spotipy.Spotify(auth=token_info['access_token'])
-        user_info = sp.current_user()
-        recent_tracks = get_recent_tracks()
-        return {
-            'access_token': token_info['access_token'],
-            'user': user_info,
-            'recent_tracks': recent_tracks,
-        }
-    else:
-        return None
+    redirect_url = (
+        f"{SPOTIFY_AUTH_URL}?client_id={SPOTIFY_CLIENT_ID}"
+        f"&response_type=code&redirect_uri={SPOTIFY_REDIRECT_URI}"
+        f"&scope={scope}&show_dialog=true"
+    )
+    return {"redirect_url": redirect_url}

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from api.spotify_routes import router as spotify_router
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 app = FastAPI()
 
@@ -17,3 +18,5 @@ app.add_middleware(
 )
 
 app.include_router(spotify_router)
+
+uvicorn.run(app, host="0.0.0.0", port=500)

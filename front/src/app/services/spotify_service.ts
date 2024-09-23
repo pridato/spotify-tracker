@@ -10,7 +10,6 @@ export const loginWithSpotify = async () => {
 
     if (response.ok) {
       const data = await response.json();
-      console.log(data);
       return data
     } else {
       throw new Error('Error al iniciar sesión con Spotify');

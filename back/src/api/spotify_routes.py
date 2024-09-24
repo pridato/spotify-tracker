@@ -36,5 +36,4 @@ async def exchange_code(request: ExchangeCodeRequest):
         logging.error("Error exchanging code for token")
         return {"error": "Error exchanging code for token"}
 
-    logging.info(f"Token: {token}")
     return token

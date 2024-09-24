@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import httpx
 from fastapi import HTTPException
 import logging
-from models import TokenResponse
+from models.TokenResponse import TokenResponse
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -64,7 +64,6 @@ async def exchange_code_for_token(code: str) -> TokenResponse:
     try:
         # Intercambio de código por token a través de una solicitud POST
         async with httpx.AsyncClient() as client:
-            logging.info(f"Exchanging code for token: {payload}")
             response = await client.post(TOKEN_URL, data=payload)
         
         # Si la solicitud no fue exitosa
@@ -74,7 +73,7 @@ async def exchange_code_for_token(code: str) -> TokenResponse:
         
         # Si todo está bien, se devuelve el acceso token configurado en el modelo TokenResponse
         token_data = response.json()
-        
+        logging.info(f"Token data: {token_data}")
         return TokenResponse(
             access_token=token_data["access_token"],
             refresh_token=token_data.get("refresh_token"),  # Puede no estar presente

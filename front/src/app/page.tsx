@@ -23,7 +23,8 @@ export default function Home() {
 
       // Si hay código, se ha logueado con éxito, devolver el code al back
       if (code) {
-        await exchangeCodeForToken(code);
+        const access_token = await exchangeCodeForToken(code);
+        localStorage.setItem("access_token", access_token.access_token);
         window.location.href = "/";
 
         toast({

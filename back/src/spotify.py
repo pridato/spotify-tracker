@@ -1,37 +1,24 @@
 import os
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
+import httpx
+from fastapi import HTTPException
+import logging
+from models import TokenResponse
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def get_spotify_client():
-    """Función para obtener los datos del cliente de Spotify a través de un .env."""
-    
-    os.environ["SPOTIPY_CLIENT_ID"] = os.getenv("SPOTIPY_CLIENT_ID")
-    os.environ["SPOTIPY_CLIENT_SECRET"] = os.getenv("SPOTIPY_CLIENT_SECRET")
-    os.environ["SPOTIPY_REDIRECT_URI"] = os.getenv("SPOTIPY_REDIRECT_URI")
-    return spotipy.Spotify(auth_manager=SpotifyOAuth(
-        scope="user-library-read user-read-recently-played",
-        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
-    ))
+def get_spotify_credentials():
+    """función para obtener las credenciales de Spotify."""
+    load_dotenv()
+    SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
+    SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+    SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
+    SPOTIFY_AUTH_URL = os.getenv("SPOTIFY_AUTH_URL")
+    SPOTIFY_TOKEN_URL = os.getenv("SPOTIFY_TOKEN_URL")
+    TOKEN_URL = os.getenv("TOKEN_URL")
+    return SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI,SPOTIFY_AUTH_URL, SPOTIFY_TOKEN_URL, TOKEN_URL
 
-def get_recent_tracks():
-    """Función para obtener las canciones del usuario que ha escuchado recientemente."""
-    sp = get_spotify_client()
-
-    results = sp.current_user_recently_played(limit=30)
-    tracks = []
-
-    for item in results['items']:
-        track_info = {
-            'name': item['track']['name'],
-            'artist': item['track']['artists'][0]['name'],
-            'uri': item['track']['uri'],
-            'played_at': item['played_at'],
-        }
-        tracks.append(track_info)
-
-    return tracks
+SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI,SPOTIFY_AUTH_URL, SPOTIFY_TOKEN_URL, TOKEN_URL = get_spotify_credentials()
 
 def get_redirect():
     """
@@ -49,14 +36,6 @@ def get_redirect():
         "user-read-recently-played "
         "user-top-read"
     )
-    
-    load_dotenv()
-    SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
-    # SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
-    SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
-
-    SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
-    # SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 
     redirect_url = (
         f"{SPOTIFY_AUTH_URL}?client_id={SPOTIFY_CLIENT_ID}"
@@ -64,3 +43,45 @@ def get_redirect():
         f"&scope={scope}&show_dialog=true"
     )
     return {"redirect_url": redirect_url}
+
+
+
+async def exchange_code_for_token(code: str) -> TokenResponse:
+    """Función para intercambiar el código de autorización por un token de acceso.
+    @param code: Código de autorización.
+    @return: Token de acceso.
+    """
+    
+    # Configuración de la carga útil de la solicitud POST
+    payload = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": SPOTIFY_REDIRECT_URI,
+        "client_id": SPOTIFY_CLIENT_ID,
+        "client_secret": SPOTIFY_CLIENT_SECRET,
+    }
+    
+    try:
+        # Intercambio de código por token a través de una solicitud POST
+        async with httpx.AsyncClient() as client:
+            logging.info(f"Exchanging code for token: {payload}")
+            response = await client.post(TOKEN_URL, data=payload)
+        
+        # Si la solicitud no fue exitosa
+        if response.status_code != 200:
+            logging.error(response.json())
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+        
+        # Si todo está bien, se devuelve el acceso token configurado en el modelo TokenResponse
+        token_data = response.json()
+        
+        return TokenResponse(
+            access_token=token_data["access_token"],
+            refresh_token=token_data.get("refresh_token"),  # Puede no estar presente
+            expires_in=token_data["expires_in"],
+            token_type=token_data["token_type"]
+        )
+        
+    except Exception as e:
+        logging.error(f"Error exchanging code for token: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")

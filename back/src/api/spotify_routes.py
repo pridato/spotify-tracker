@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 from spotify import *
-from flask import Flask, request, redirect
 import logging
+from models.TokenResponse import TokenResponse
+from models.ExchangeCodeRequest import ExchangeCodeRequest
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 router = APIRouter()
@@ -22,13 +23,18 @@ def get_redirect_url():
     return url
     
 
-@router.get("/login")
-async def login():
-    client = get_spotify_client()
-    """Endpoint para redirigir al usuario a la URL de login de Spotify."""
-    return {"client": client.current_user_playing_track()}
+@router.post("/exchange-code", response_model=TokenResponse)
+async def exchange_code(request: ExchangeCodeRequest):
+    """
+    Intercambia el código de autorización por un token de acceso
+    @param code: Código de autorización
+    @return: Token de acceso
+    """
+    token = await exchange_code_for_token(request.code)
+    
+    if token is None:
+        logging.error("Error exchanging code for token")
+        return {"error": "Error exchanging code for token"}
 
-@router.get("/recent-tracks")
-async def recent_tracks(tracks: dict = Depends(get_recent_tracks)):
-    """Endpoint para obtener las canciones recientes del usuario."""
-    return tracks
+    logging.info(f"Token: {token}")
+    return token

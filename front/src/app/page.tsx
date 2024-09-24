@@ -8,12 +8,36 @@ import {
   Text,
   Heading,
 } from "@chakra-ui/react";
-import { loginWithSpotify } from "./services/spotify_service";
+import { exchangeCodeForToken, loginWithSpotify } from "./services/spotify_service";
 import { useToast } from "@chakra-ui/react";
+import { useEffect } from "react";
 
 export default function Home() {
   const toast = useToast();
   const status = "error";
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+
+      // Si hay código, se ha logueado con éxito, devolver el code al back
+      if (code) {
+        await exchangeCodeForToken(code);
+        window.location.href = "/";
+
+        toast({
+          title: "¡Inicio de sesión exitoso!",
+          description: "Has iniciado sesión con Spotify",
+          status: "success",
+          isClosable: true,
+          position: "top-right",
+        });
+      }
+    };
+
+    fetchData();
+  }, [toast]);
 
   /**
    * Funcion para loguearse con Spotify
@@ -21,8 +45,7 @@ export default function Home() {
    */
   async function handleLoginWithSpotify() {
     try {
-      const data = await loginWithSpotify();
-      console.log(data);
+      await loginWithSpotify();
     } catch (error) {
       toast({
         title: `${status} toast ${error}`,

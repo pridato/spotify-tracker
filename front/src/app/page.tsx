@@ -14,17 +14,16 @@ import {
   loginWithSpotify,
 } from "./services/spotify_service";
 import { useToast } from "@chakra-ui/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import SongCard from "./components/Card";
+import { RecentlyPlayedResponse } from "./models/RecentlyPlayedResponse";
 
 export default function Home() {
   const toast = useToast();
   const status = "error";
+  const [recentTracks, setRecentTracks] = useState<RecentlyPlayedResponse | null>(null);
 
   useEffect(() => {
-
-    /**
-     * Funcion para obtener el accessToken
-     */
     const fetchData = async () => {
       const url = new URL(window.location.href);
       const code = url.searchParams.get("code");
@@ -32,19 +31,16 @@ export default function Home() {
       // Si hay código, se ha logueado con éxito, devolver el code al back
       if (code) {
         const access_token = await exchangeCodeForToken(code);
-        if(!access_token) return
+        if (!access_token) return; // Si no se obtuvo el token, no continuar.
+
         const data = await getUserRecentTracks(access_token.access_token);
-        
+        setRecentTracks(data);
       }
     };
 
     fetchData();
-  }, [toast]);
+  }, [toast]); // Solo depende de toast
 
-  /**
-   * Funcion para loguearse con Spotify
-   * @returns void
-   */
   async function handleLoginWithSpotify() {
     try {
       await loginWithSpotify();
@@ -267,6 +263,12 @@ export default function Home() {
                 </Button>
               </CardFooter>
             </Card>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {recentTracks?.items.map((song) => (
+                <SongCard key={song.track.id} song={song.track} onPlay={() => {}} />
+              ))}
+            </div>
           </div>
         </div>
       </div>

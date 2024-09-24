@@ -35,6 +35,7 @@ export default function Home() {
 
         const data = await getUserRecentTracks(access_token.access_token);
         setRecentTracks(data);
+        console.log(data);
       }
     };
 
@@ -246,27 +247,32 @@ export default function Home() {
               </span>
             </div>
 
-            <Card align="center" bg="gray.300" py="4" my="5">
-              <CardHeader>
-                <Heading size="md">Datos extraídos de Spotify</Heading>
-              </CardHeader>
-              <CardBody>
-                <Text>Exporta todo...</Text>
-              </CardBody>
-              <CardFooter>
-                <Button
-                  onClick={handleLoginWithSpotify}
-                  colorScheme="teal"
-                  variant="solid"
-                >
-                  Iniciar sesión con Spotify
-                </Button>
-              </CardFooter>
-            </Card>
+            {
+              // Si no hay canciones recientes, mostrar el botón de iniciar sesión con Spotify
+              !recentTracks && (
+                <Card align="center" bg="gray.300" py="4" my="5">
+                  <CardHeader>
+                    <Heading size="md">Datos extraídos de Spotify</Heading>
+                  </CardHeader>
+                  <CardBody>
+                    <Text>Exporta todo...</Text>
+                  </CardBody>
+                  <CardFooter>
+                    <Button
+                      onClick={handleLoginWithSpotify}
+                      colorScheme="teal"
+                      variant="solid"
+                    >
+                      Iniciar sesión con Spotify
+                    </Button>
+                  </CardFooter>
+                </Card>
+              )
+            }
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mt-6">
               {recentTracks?.items.map((song) => (
-                <SongCard key={song.track.id} song={song.track} onPlay={() => {}} />
+                <SongCard key={song.played_at} song={song.track} onPlay={() => {}} />
               ))}
             </div>
           </div>

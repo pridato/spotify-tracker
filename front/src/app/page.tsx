@@ -10,21 +10,33 @@ import {
 } from "@chakra-ui/react";
 import { exchangeCodeForToken, loginWithSpotify } from "./services/spotify_service";
 import { useToast } from "@chakra-ui/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import useTokenStore from "./services/user_storage";
 
 export default function Home() {
   const toast = useToast();
   const status = "error";
+  const [accessToken, setAccessToken] = useState("");
 
   useEffect(() => {
+
+    if(useTokenStore.getState().token) {
+      setAccessToken(useTokenStore.getState().token!.access_token);
+      
+    } 
+
+    // función para obtener el access token sino existe
     const fetchData = async () => {
       const url = new URL(window.location.href);
       const code = url.searchParams.get("code");
 
+      
+
+
       // Si hay código, se ha logueado con éxito, devolver el code al back
       if (code) {
         const access_token = await exchangeCodeForToken(code);
-        localStorage.setItem("access_token", access_token.access_token);
+        useTokenStore.getState().setToken(access_token);
         window.location.href = "/";
 
         toast({

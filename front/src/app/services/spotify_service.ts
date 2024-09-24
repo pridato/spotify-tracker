@@ -56,22 +56,26 @@ export const exchangeCodeForToken = async (code: string) => {
 }
 
 /**
- * 
- * @param accessToken 
- * @returns 
+ * funcion para obtener las canciones recientes escuchadas por el usuario
+ * @param accessToken token de acceso
+ * @returns Lista de todas las canciones
  */
-export const getUserData = async (accessToken: string) => {
-  const response = await fetch('https://api.spotify.com/v1/me', {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+export const getUserRecentTracks = async (accessToken: string) => {
+  try {
+    const response = await fetch(`${API_URL}/get-recent-tracks`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch user data');
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      throw new Error('Error al obtener las canciones recientes');
+    }
+  } catch (error) {
+    console.error('Error al intentar obtener las canciones recientes:', error);
   }
-
-  const userData = await response.json();
-  return userData;
-};
+}

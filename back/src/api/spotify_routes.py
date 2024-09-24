@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Header
 from spotify import *
 import logging
 from models.TokenResponse import TokenResponse
@@ -37,3 +37,28 @@ async def exchange_code(request: ExchangeCodeRequest):
         return {"error": "Error exchanging code for token"}
 
     return token
+
+@router.get("/get-recent-tracks")
+async def get_recent_tracks(Authorization: str = Header(...)):
+    """
+    Obtiene las canciones recientes del usuario
+    @return: Canciones recientes del usuario
+    """
+    try:
+        # si el header Authorization contiene access token lo obtenemos sino devolvemos error directo
+        if Authorization.startswith("Bearer "):
+            access_token = Authorization.split(" ")[1]
+            
+            tracks = await get_recently_played(access_token)
+    
+            if tracks is None:
+                logging.error("Error getting recent tracks")
+                return {"error": "Error getting recent tracks"}
+
+            return tracks
+        else:
+            raise HTTPException(status_code=400, detail="Invalid Authorization header format")
+    except Exception as e:
+        logging.error(f"Error getting access token from header: {e}")
+        return {"error": "Error getting access token from header"}
+    

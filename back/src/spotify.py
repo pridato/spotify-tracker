@@ -45,7 +45,6 @@ def get_redirect():
     return {"redirect_url": redirect_url}
 
 
-
 async def exchange_code_for_token(code: str) -> TokenResponse:
     """Función para intercambiar el código de autorización por un token de acceso.
     @param code: Código de autorización.
@@ -84,3 +83,34 @@ async def exchange_code_for_token(code: str) -> TokenResponse:
     except Exception as e:
         logging.error(f"Error exchanging code for token: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+async def get_recently_played(access_token: str):
+    """Función para obtener las canciones recientes del usuario.
+    @param access_token: Token de acceso.
+    @return: Canciones recientes del usuario.
+    """
+    try:
+        logging.info("Getting recent tracks" + access_token)
+        url = "https://api.spotify.com/v1/me/player/recently-played"
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        params = {
+            "limit": 50
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers, params=params)
+            
+        # Si la solicitud no fue exitosa se lanza una excepción
+        if response.status_code != 200:
+            logging.error(response.json())
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+        
+        logging.info(f"Recent tracks: {response.json()}")
+        return response.json()
+    except Exception as e:
+        logging.error(f"Error getting recent tracks: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+    

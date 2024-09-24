@@ -8,44 +8,33 @@ import {
   Text,
   Heading,
 } from "@chakra-ui/react";
-import { exchangeCodeForToken, loginWithSpotify } from "./services/spotify_service";
+import {
+  exchangeCodeForToken,
+  getUserRecentTracks,
+  loginWithSpotify,
+} from "./services/spotify_service";
 import { useToast } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
-import useTokenStore from "./services/user_storage";
+import { useEffect } from "react";
 
 export default function Home() {
   const toast = useToast();
   const status = "error";
-  const [accessToken, setAccessToken] = useState("");
 
   useEffect(() => {
 
-    if(useTokenStore.getState().token) {
-      setAccessToken(useTokenStore.getState().token!.access_token);
-      
-    } 
-
-    // función para obtener el access token sino existe
+    /**
+     * Funcion para obtener el accessToken
+     */
     const fetchData = async () => {
       const url = new URL(window.location.href);
       const code = url.searchParams.get("code");
 
-      
-
-
       // Si hay código, se ha logueado con éxito, devolver el code al back
       if (code) {
         const access_token = await exchangeCodeForToken(code);
-        useTokenStore.getState().setToken(access_token);
-        window.location.href = "/";
-
-        toast({
-          title: "¡Inicio de sesión exitoso!",
-          description: "Has iniciado sesión con Spotify",
-          status: "success",
-          isClosable: true,
-          position: "top-right",
-        });
+        if(!access_token) return
+        const data = await getUserRecentTracks(access_token.access_token);
+        
       }
     };
 
@@ -66,7 +55,6 @@ export default function Home() {
         status: status,
         isClosable: true,
         position: "top-right",
-
       });
     }
   }
@@ -270,14 +258,13 @@ export default function Home() {
                 <Text>Exporta todo...</Text>
               </CardBody>
               <CardFooter>
-              <Button
-                onClick={handleLoginWithSpotify}
-                colorScheme="teal"
-                variant="solid"
-              >
-                Iniciar sesión con Spotify
-              </Button>
-
+                <Button
+                  onClick={handleLoginWithSpotify}
+                  colorScheme="teal"
+                  variant="solid"
+                >
+                  Iniciar sesión con Spotify
+                </Button>
               </CardFooter>
             </Card>
           </div>

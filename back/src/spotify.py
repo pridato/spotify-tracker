@@ -114,3 +114,58 @@ async def get_recently_played(access_token: str):
         logging.error(f"Error getting recent tracks: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
     
+async def get_top_artists_and_tracks(access_token: str, limit: int = 50):
+    """Obtener los artistas y canciones más escuchados del usuario.
+    @param access_token: Token de acceso.
+    @param limit: Número total de artistas y canciones a obtener (máximo 50).
+    @return: Un diccionario con los artistas y canciones más escuchados.
+    """
+    try:
+        # URLs de los endpoints
+        artists_url = "https://api.spotify.com/v1/me/top/artists"
+        tracks_url = "https://api.spotify.com/v1/me/top/tracks"
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+
+        # Obtener artistas más escuchados
+        artists_params = {
+            "limit": limit,
+            "time_range": "short_term"  # Cambia esto según tus necesidades
+        }
+        async with httpx.AsyncClient() as client:
+            artists_response = await client.get(artists_url, headers=headers, params=artists_params)
+
+            if artists_response.status_code != 200:
+                logging.error(f"Error getting top artists: {artists_response.json()}")
+                raise HTTPException(status_code=artists_response.status_code, detail=artists_response.json())
+
+            top_artists = artists_response.json().get('items', [])
+            artists_list = [{"name": artist['name'], "id": artist['id']} for artist in top_artists]
+
+        # Obtener canciones más escuchadas
+        tracks_params = {
+            "limit": limit,
+            "time_range": "short_term"  # Cambia esto según tus necesidades
+        }
+        async with httpx.AsyncClient() as client:
+            tracks_response = await client.get(tracks_url, headers=headers, params=tracks_params)
+
+            if tracks_response.status_code != 200:
+                logging.error(f"Error getting top tracks: {tracks_response.json()}")
+                raise HTTPException(status_code=tracks_response.status_code, detail=tracks_response.json())
+
+            top_tracks = tracks_response.json().get('items', [])
+            tracks_list = [{"name": track['name'], "id": track['id'], "artists": [artist['name'] for artist in track['artists']]} for track in top_tracks]
+
+        # Devolver resultados
+        return {
+            "top_artists": artists_list,
+            "top_tracks": tracks_list
+        }
+
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+    
+    

@@ -62,3 +62,25 @@ async def get_recent_tracks(Authorization: str = Header(...)):
         logging.error(f"Error getting access token from header: {e}")
         return {"error": "Error getting access token from header"}
     
+@router.get("/top-artists-and-tracks")
+async def get_top_artists_and_tracks(Authorization: str = Header(...)):
+    """
+    Obtiene los artistas y canciones principales del usuario
+    @return: Artistas y canciones principales del usuario
+    """
+    try:
+        if Authorization.startswith("Bearer "):
+            access_token = Authorization.split(" ")[1]
+            
+            data = await get_top_artists_and_tracks(access_token)
+    
+            if data is None:
+                logging.error("Error getting top artists and tracks")
+                return {"error": "Error getting top artists and tracks"}
+
+            return data
+        else:
+            raise HTTPException(status_code=400, detail="Invalid Authorization header format")
+    except Exception as e:
+        logging.error(f"Error getting access token from header: {e}")
+        return {"error": "Error getting access token from header"}

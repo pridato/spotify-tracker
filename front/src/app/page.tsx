@@ -15,32 +15,59 @@ import {
 } from "./services/spotify_service";
 import { useToast } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import SongCard from "./components/Card";
 import { RecentlyPlayedResponse } from "./models/RecentlyPlayedResponse";
+import { Spinner } from "@chakra-ui/react";
+import { RecentlyPlayedItem } from "./models/RecentlyPlayedItem";
+import { Track } from "./models/Track";
+import SongBarChart from "./components/SongBarChart";
 
 export default function Home() {
   const toast = useToast();
   const status = "error";
-  const [recentTracks, setRecentTracks] = useState<RecentlyPlayedResponse | null>(null);
+  const [recentTracks, setRecentTracks] =
+    useState<RecentlyPlayedResponse | null>(null);
+  const [showSpinner, setShowSpinner] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      const url = new URL(window.location.href);
-      const code = url.searchParams.get("code");
+      try {
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
 
-      // Si hay código, se ha logueado con éxito, devolver el code al back
-      if (code) {
-        const access_token = await exchangeCodeForToken(code);
-        if (!access_token) return; // Si no se obtuvo el token, no continuar.
+        // Si hay código, se ha logueado con éxito, devolver el code al back
+        if (code) {
+          const access_token = await exchangeCodeForToken(code);
+          if (!access_token) throw new Error("Failed to get access token");
 
-        const data = await getUserRecentTracks(access_token.access_token);
-        setRecentTracks(data);
-        console.log(data);
+          // obtener todas las canciones, activar spinner
+          const data = await getUserRecentTracks(access_token.access_token);
+          setRecentTracks(data);
+          console.log(data);
+        }
+      } catch (error) {
+        console.error("Error fetching data", error);
+        return;
+      } finally {
+        setShowSpinner(false);
       }
     };
 
     fetchData();
-  }, [toast]); // Solo depende de toast
+  }, [toast]);
+
+  const songCounts = recentTracks?.items.reduce<
+    Record<string, { track: Track; count: number }>
+  >((acc, current: RecentlyPlayedItem) => {
+    const trackName = current.track.name;
+    if (!acc[trackName]) {
+      acc[trackName] = { track: current.track, count: 1 };
+    } else {
+      acc[trackName].count += 1;
+    }
+    return acc;
+  }, {} as Record<string, { track: Track; count: number }>);
+
+  const formattedData = songCounts ? Object.values(songCounts) : [];
 
   async function handleLoginWithSpotify() {
     try {
@@ -144,6 +171,12 @@ export default function Home() {
                 </a>
               </div>
             </nav>
+
+            {showSpinner && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Spinner size="xl" />
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-col w-full md:space-y-4">
@@ -270,11 +303,25 @@ export default function Home() {
               )
             }
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mt-6">
+            {recentTracks && (
+              <div className="mt-6">
+                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+                  Canciones recientes
+                </h2>
+                <h3 className="text-gray-400 text-md">
+                  Canciones que has escuchado recientemente
+                </h3>
+                <SongBarChart data={formattedData} />
+              </div>
+            )}
+
+            {/* 
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mt-6">
               {recentTracks?.items.map((song) => (
                 <SongCard key={song.played_at} song={song.track} onPlay={() => {}} />
               ))}
             </div>
+            */}
           </div>
         </div>
       </div>

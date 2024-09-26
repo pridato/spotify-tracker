@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Header
-from spotify import *
+from fastapi import APIRouter, HTTPException, Header
+from spotify import get_redirect, exchange_code_for_token, get_recently_played, get_top_artists_and_tracks # type: ignore
 import logging
 from models.TokenResponse import TokenResponse
 from models.ExchangeCodeRequest import ExchangeCodeRequest
@@ -35,7 +35,7 @@ async def exchange_code(request: ExchangeCodeRequest):
     if token is None:
         logging.error("Error exchanging code for token")
         return {"error": "Error exchanging code for token"}
-
+    logging.info(f"Token: {token}")
     return token
 
 @router.get("/get-recent-tracks")

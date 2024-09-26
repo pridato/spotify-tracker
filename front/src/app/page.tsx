@@ -45,12 +45,11 @@ export default function Home() {
           // obtener todas las canciones, activar spinner
           const data = await getUserRecentTracks(token.access_token);
           setRecentTracks(data);
-          localStorage.setItem("token", JSON.stringify(token));
+          console.log(recentTracks);
           window.history.pushState({}, document.title, "/");
         }
       } catch (error) {
         console.error("Error fetching data", error);
-        return;
       } finally {
       }
     };
@@ -58,7 +57,7 @@ export default function Home() {
     fetchData();
   }, [toast, token]);
 
-  const songCounts = recentTracks?.items.reduce<
+  const songCounts = recentTracks?.items?.reduce<
     Record<string, { track: Track; count: number }>
   >((acc, current: RecentlyPlayedItem) => {
     const trackName = current.track.name;
@@ -131,7 +130,7 @@ export default function Home() {
 
       {
         // Si no hay canciones recientes, mostrar el botón de iniciar sesión con Spotify
-        !recentTracks && (
+        !recentTracks?.items && (
           <Card align="center" bg="gray.300" py="4" my="5">
             <CardHeader>
               <Heading size="md">Datos extraídos de Spotify</Heading>
@@ -152,7 +151,7 @@ export default function Home() {
         )
       }
 
-      {recentTracks && (
+      {recentTracks?.items && (
         <div className="mt-6">
           <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
             Canciones recientes

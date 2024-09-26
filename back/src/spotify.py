@@ -5,7 +5,10 @@ from fastapi import HTTPException
 import logging
 from models.TokenResponse import TokenResponse
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 def get_spotify_credentials():
     """función para obtener las credenciales de Spotify."""
@@ -15,10 +18,23 @@ def get_spotify_credentials():
     SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
     SPOTIFY_AUTH_URL = os.getenv("SPOTIFY_AUTH_URL")
     SPOTIFY_TOKEN_URL = os.getenv("SPOTIFY_TOKEN_URL")
-    TOKEN_URL = os.getenv("TOKEN_URL")
-    return SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI,SPOTIFY_AUTH_URL, SPOTIFY_TOKEN_URL, TOKEN_URL
+    return (
+        SPOTIFY_CLIENT_ID,
+        SPOTIFY_CLIENT_SECRET,
+        SPOTIFY_REDIRECT_URI,
+        SPOTIFY_AUTH_URL,
+        SPOTIFY_TOKEN_URL,
+    )
 
-SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI,SPOTIFY_AUTH_URL, SPOTIFY_TOKEN_URL, TOKEN_URL = get_spotify_credentials()
+
+(
+    SPOTIFY_CLIENT_ID,
+    SPOTIFY_CLIENT_SECRET,
+    SPOTIFY_REDIRECT_URI,
+    SPOTIFY_AUTH_URL,
+    SPOTIFY_TOKEN_URL,
+) = get_spotify_credentials()
+
 
 def get_redirect():
     """
@@ -50,7 +66,7 @@ async def exchange_code_for_token(code: str) -> TokenResponse:
     @param code: Código de autorización.
     @return: Token de acceso.
     """
-    
+
     # Configuración de la carga útil de la solicitud POST
     payload = {
         "grant_type": "authorization_code",
@@ -59,27 +75,29 @@ async def exchange_code_for_token(code: str) -> TokenResponse:
         "client_id": SPOTIFY_CLIENT_ID,
         "client_secret": SPOTIFY_CLIENT_SECRET,
     }
-    
+
     try:
+        print(SPOTIFY_TOKEN_URL)
         # Intercambio de código por token a través de una solicitud POST
         async with httpx.AsyncClient() as client:
-            response = await client.post(TOKEN_URL, data=payload)
-        
+            response = await client.post(SPOTIFY_TOKEN_URL, data=payload)  # type: ignore
+
         # Si la solicitud no fue exitosa
         if response.status_code != 200:
             logging.error(response.json())
-            raise HTTPException(status_code=response.status_code, detail=response.json())
-        
+            raise HTTPException(
+                status_code=response.status_code, detail=response.json()
+            )
+
         # Si todo está bien, se devuelve el acceso token configurado en el modelo TokenResponse
         token_data = response.json()
-        logging.info(f"Token data: {token_data}")
         return TokenResponse(
             access_token=token_data["access_token"],
             refresh_token=token_data.get("refresh_token"),  # Puede no estar presente
             expires_in=token_data["expires_in"],
-            token_type=token_data["token_type"]
+            token_type=token_data["token_type"],
         )
-        
+
     except Exception as e:
         logging.error(f"Error exchanging code for token: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -93,27 +111,26 @@ async def get_recently_played(access_token: str):
     try:
         logging.info("Getting recent tracks" + access_token)
         url = "https://api.spotify.com/v1/me/player/recently-played"
-        headers = {
-            "Authorization": f"Bearer {access_token}"
-        }
-        params = {
-            "limit": 50
-        }
-        
+        headers = {"Authorization": f"Bearer {access_token}"}
+        params = {"limit": 50}
+
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=headers, params=params)
-            
+
         # Si la solicitud no fue exitosa se lanza una excepción
         if response.status_code != 200:
             logging.error(response.json())
-            raise HTTPException(status_code=response.status_code, detail=response.json())
-        
+            raise HTTPException(
+                status_code=response.status_code, detail=response.json()
+            )
+
         logging.info(f"Recent tracks: {response.json()}")
         return response.json()
     except Exception as e:
         logging.error(f"Error getting recent tracks: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-    
+
+
 async def get_top_artists_and_tracks(access_token: str, limit: int = 50):
     """Obtener los artistas y canciones más escuchados del usuario.
     @param access_token: Token de acceso.
@@ -124,48 +141,60 @@ async def get_top_artists_and_tracks(access_token: str, limit: int = 50):
         # URLs de los endpoints
         artists_url = "https://api.spotify.com/v1/me/top/artists"
         tracks_url = "https://api.spotify.com/v1/me/top/tracks"
-        headers = {
-            "Authorization": f"Bearer {access_token}"
-        }
+        headers = {"Authorization": f"Bearer {access_token}"}
 
         # Obtener artistas más escuchados
         artists_params = {
             "limit": limit,
-            "time_range": "short_term"  # Cambia esto según tus necesidades
+            "time_range": "short_term",  # Cambia esto según tus necesidades
         }
         async with httpx.AsyncClient() as client:
-            artists_response = await client.get(artists_url, headers=headers, params=artists_params)
+            artists_response = await client.get(
+                artists_url, headers=headers, params=artists_params
+            )
 
             if artists_response.status_code != 200:
                 logging.error(f"Error getting top artists: {artists_response.json()}")
-                raise HTTPException(status_code=artists_response.status_code, detail=artists_response.json())
+                raise HTTPException(
+                    status_code=artists_response.status_code,
+                    detail=artists_response.json(),
+                )
 
-            top_artists = artists_response.json().get('items', [])
-            artists_list = [{"name": artist['name'], "id": artist['id']} for artist in top_artists]
+            top_artists = artists_response.json().get("items", [])
+            artists_list = [
+                {"name": artist["name"], "id": artist["id"]} for artist in top_artists
+            ]
 
         # Obtener canciones más escuchadas
         tracks_params = {
             "limit": limit,
-            "time_range": "short_term"  # Cambia esto según tus necesidades
+            "time_range": "short_term",  # Cambia esto según tus necesidades
         }
         async with httpx.AsyncClient() as client:
-            tracks_response = await client.get(tracks_url, headers=headers, params=tracks_params)
+            tracks_response = await client.get(
+                tracks_url, headers=headers, params=tracks_params
+            )
 
             if tracks_response.status_code != 200:
                 logging.error(f"Error getting top tracks: {tracks_response.json()}")
-                raise HTTPException(status_code=tracks_response.status_code, detail=tracks_response.json())
+                raise HTTPException(
+                    status_code=tracks_response.status_code,
+                    detail=tracks_response.json(),
+                )
 
-            top_tracks = tracks_response.json().get('items', [])
-            tracks_list = [{"name": track['name'], "id": track['id'], "artists": [artist['name'] for artist in track['artists']]} for track in top_tracks]
+            top_tracks = tracks_response.json().get("items", [])
+            tracks_list = [
+                {
+                    "name": track["name"],
+                    "id": track["id"],
+                    "artists": [artist["name"] for artist in track["artists"]],
+                }
+                for track in top_tracks
+            ]
 
         # Devolver resultados
-        return {
-            "top_artists": artists_list,
-            "top_tracks": tracks_list
-        }
+        return {"top_artists": artists_list, "top_tracks": tracks_list}
 
     except Exception as e:
         logging.error(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-    
-    
